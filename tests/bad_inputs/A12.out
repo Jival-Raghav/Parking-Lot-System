@@ -1,0 +1,5 @@
+Created a parking lot with 1 usable slots
+Allocated slot: (1, 2)
+Error: create_parking_lot failed: invalid arguments
+Slot     Registration No    Colour
+(1, 2)   CAR-1              Red

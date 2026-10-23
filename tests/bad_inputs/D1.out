@@ -1,0 +1,6 @@
+Error: park failed: parking lot not created
+Error: leave failed: parking lot not created
+Error: status failed: parking lot not created
+Error: registration_numbers_for_cars_with_colour failed: parking lot not created
+Error: slot_numbers_for_cars_with_colour failed: parking lot not created
+Error: slot_number_for_registration_number failed: parking lot not created

@@ -1,0 +1,3 @@
+Error: create_parking_lot failed: invalid arguments
+Created a parking lot with 1 usable slots
+Allocated slot: (1, 2)

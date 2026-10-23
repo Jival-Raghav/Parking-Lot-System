@@ -1,0 +1,6 @@
+park C1 White
+leave 1 1
+status
+registration_numbers_for_cars_with_colour White
+slot_numbers_for_cars_with_colour White
+slot_number_for_registration_number C1

@@ -101,70 +101,116 @@ TEST_CASE(test_format_success_outputs) {
 TEST_CASE(test_format_error_messages) {
     std::string out;
 
-    // 1. not created
-    CommandResult r1; r1.kind = ResultKind::ERROR_NOT_CREATED;
+    // 1. invalid arguments
+    CommandResult r1;
+    r1.kind = ResultKind::COMMAND_FAILED;
+    r1.command_name = "park";
+    r1.reason = ErrorReason::INVALID_ARGUMENTS;
     formatter::format_result(r1, out);
-    CHECK_EQ(out, "Error: parking lot not created\n");
+    CHECK_EQ(out, "Error: park failed: invalid arguments\n");
 
-    // 2. already created
+    // 2. parking lot not created
     out.clear();
-    CommandResult r2; r2.kind = ResultKind::ERROR_ALREADY_CREATED;
+    CommandResult r2;
+    r2.kind = ResultKind::COMMAND_FAILED;
+    r2.command_name = "status";
+    r2.reason = ErrorReason::PARKING_LOT_NOT_CREATED;
     formatter::format_result(r2, out);
-    CHECK_EQ(out, "Error: parking lot already created\n");
+    CHECK_EQ(out, "Error: status failed: parking lot not created\n");
 
-    // 3. unknown command
+    // 3. lot already exists
     out.clear();
-    CommandResult r3; r3.kind = ResultKind::ERROR_UNKNOWN_COMMAND; r3.command_name = "foo";
+    CommandResult r3;
+    r3.kind = ResultKind::COMMAND_FAILED;
+    r3.command_name = "create_parking_lot";
+    r3.reason = ErrorReason::LOT_ALREADY_EXISTS;
     formatter::format_result(r3, out);
+    CHECK_EQ(out, "Error: create_parking_lot failed: lot already exists\n");
+
+    // 4. grid too large
+    out.clear();
+    CommandResult r4;
+    r4.kind = ResultKind::COMMAND_FAILED;
+    r4.command_name = "create_parking_lot";
+    r4.reason = ErrorReason::GRID_TOO_LARGE;
+    formatter::format_result(r4, out);
+    CHECK_EQ(out, "Error: create_parking_lot failed: grid too large\n");
+
+    // 5. invalid map
+    out.clear();
+    CommandResult r5;
+    r5.kind = ResultKind::COMMAND_FAILED;
+    r5.command_name = "create_parking_lot";
+    r5.reason = ErrorReason::INVALID_MAP;
+    formatter::format_result(r5, out);
+    CHECK_EQ(out, "Error: create_parking_lot failed: invalid map\n");
+
+    // 6. registration already parked
+    out.clear();
+    CommandResult r6;
+    r6.kind = ResultKind::COMMAND_FAILED;
+    r6.command_name = "park";
+    r6.reason = ErrorReason::REGISTRATION_ALREADY_PARKED;
+    formatter::format_result(r6, out);
+    CHECK_EQ(out, "Error: park failed: registration already parked\n");
+
+    // 7. slot out of range
+    out.clear();
+    CommandResult r7;
+    r7.kind = ResultKind::COMMAND_FAILED;
+    r7.command_name = "leave";
+    r7.reason = ErrorReason::SLOT_OUT_OF_RANGE;
+    formatter::format_result(r7, out);
+    CHECK_EQ(out, "Error: leave failed: slot out of range\n");
+
+    // 8. not a usable slot
+    out.clear();
+    CommandResult r8;
+    r8.kind = ResultKind::COMMAND_FAILED;
+    r8.command_name = "leave";
+    r8.reason = ErrorReason::NOT_A_USABLE_SLOT;
+    formatter::format_result(r8, out);
+    CHECK_EQ(out, "Error: leave failed: not a usable slot\n");
+
+    // 9. slot already free
+    out.clear();
+    CommandResult r9;
+    r9.kind = ResultKind::COMMAND_FAILED;
+    r9.command_name = "leave";
+    r9.reason = ErrorReason::SLOT_ALREADY_FREE;
+    formatter::format_result(r9, out);
+    CHECK_EQ(out, "Error: leave failed: slot already free\n");
+
+    // 10. unknown command (with sanitization)
+    out.clear();
+    CommandResult r10;
+    r10.kind = ResultKind::ERROR_UNKNOWN_COMMAND;
+    r10.raw_unknown_name = "foo";
+    formatter::format_result(r10, out);
     CHECK_EQ(out, "Error: unknown command 'foo'\n");
 
-    // 4. invalid arguments
+    // Sanitization: non-printable replaced by '?'
     out.clear();
-    CommandResult r4; r4.kind = ResultKind::ERROR_INVALID_ARGUMENTS; r4.command_name = "park";
-    formatter::format_result(r4, out);
-    CHECK_EQ(out, "Error: invalid arguments for park\n");
+    CommandResult r10_np;
+    r10_np.kind = ResultKind::ERROR_UNKNOWN_COMMAND;
+    r10_np.raw_unknown_name = "f\x01\x1F" "o";
+    formatter::format_result(r10_np, out);
+    CHECK_EQ(out, "Error: unknown command 'f??o'\n");
 
-    // 5. invalid dimensions
+    // Sanitization: max 32 chars + "..."
     out.clear();
-    CommandResult r5; r5.kind = ResultKind::ERROR_INVALID_DIMENSIONS;
-    formatter::format_result(r5, out);
-    CHECK_EQ(out, "Error: invalid dimensions\n");
+    CommandResult r10_long;
+    r10_long.kind = ResultKind::ERROR_UNKNOWN_COMMAND;
+    r10_long.raw_unknown_name = std::string(40, 'a');
+    formatter::format_result(r10_long, out);
+    CHECK_EQ(out, "Error: unknown command '" + std::string(32, 'a') + "...'\n");
 
-    // 6. invalid map
+    // 11. unexpected map data ignored
     out.clear();
-    CommandResult r6; r6.kind = ResultKind::ERROR_INVALID_MAP;
-    formatter::format_result(r6, out);
-    CHECK_EQ(out, "Error: invalid map\n");
-
-    // 7. grid too large
-    out.clear();
-    CommandResult r7; r7.kind = ResultKind::ERROR_GRID_TOO_LARGE;
-    formatter::format_result(r7, out);
-    CHECK_EQ(out, "Error: grid too large\n");
-
-    // 8. registration already parked
-    out.clear();
-    CommandResult r8; r8.kind = ResultKind::ERROR_REGISTRATION_ALREADY_PARKED; r8.registration = "KA-01-1234";
-    formatter::format_result(r8, out);
-    CHECK_EQ(out, "Error: registration KA-01-1234 is already parked\n");
-
-    // 9. slot out of range
-    out.clear();
-    CommandResult r9; r9.kind = ResultKind::ERROR_SLOT_OUT_OF_RANGE; r9.slot = {10, 20};
-    formatter::format_result(r9, out);
-    CHECK_EQ(out, "Error: slot (10, 20) is out of range\n");
-
-    // 10. not usable slot
-    out.clear();
-    CommandResult r10; r10.kind = ResultKind::ERROR_NOT_USABLE_SLOT; r10.slot = {1, 1};
-    formatter::format_result(r10, out);
-    CHECK_EQ(out, "Error: (1, 1) is not a usable parking slot\n");
-
-    // 11. slot already free
-    out.clear();
-    CommandResult r11; r11.kind = ResultKind::ERROR_SLOT_ALREADY_FREE; r11.slot = {2, 1};
+    CommandResult r11;
+    r11.kind = ResultKind::ERROR_UNEXPECTED_MAP_DATA;
     formatter::format_result(r11, out);
-    CHECK_EQ(out, "Error: slot (2, 1) is already free\n");
+    CHECK_EQ(out, "Error: unexpected map data ignored\n");
 }
 
 int main() {

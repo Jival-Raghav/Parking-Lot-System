@@ -1,71 +1,47 @@
 #include "commands.h"
+#include "parser.h"
 #include "grid.h"
 #include "distance.h"
 #include "slots.h"
 #include "state.h"
-#include <charconv>
-#include <limits>
 
 namespace parking::commands {
 
-namespace {
-
-bool parse_positive_int(const std::string& str, int32_t& out_val) {
-    if (str.empty()) return false;
-    for (char c : str) {
-        if (c < '0' || c > '9') return false;
-    }
-    long long val = 0;
-    auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), val);
-    if (ec != std::errc{} || ptr != str.data() + str.size()) {
-        return false;
-    }
-    if (val <= 0 || val > std::numeric_limits<int32_t>::max()) {
-        return false;
-    }
-    out_val = static_cast<int32_t>(val);
-    return true;
-}
-
-} // anonymous namespace
-
 CommandResult execute_create_parking_lot(LotState& lot, const Command& cmd) {
-    if (cmd.type == CommandType::INVALID_ARGS) {
+    if (cmd.type == CommandType::PRE_FAILED) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_INVALID_ARGUMENTS;
-        res.command_name = cmd.raw_name;
-        return res;
-    }
-    if (cmd.type == CommandType::INVALID_DIMENSIONS) {
-        CommandResult res;
-        res.kind = ResultKind::ERROR_INVALID_DIMENSIONS;
-        return res;
-    }
-    if (cmd.type == CommandType::GRID_TOO_LARGE) {
-        CommandResult res;
-        res.kind = ResultKind::ERROR_GRID_TOO_LARGE;
-        return res;
-    }
-    if (cmd.type == CommandType::INVALID_MAP) {
-        CommandResult res;
-        res.kind = ResultKind::ERROR_INVALID_MAP;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "create_parking_lot";
+        res.reason = cmd.error_reason;
         return res;
     }
 
     if (lot.created) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_ALREADY_CREATED;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "create_parking_lot";
+        res.reason = ErrorReason::LOT_ALREADY_EXISTS;
+        return res;
+    }
+
+    if (!cmd.map_is_valid) {
+        CommandResult res;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "create_parking_lot";
+        res.reason = ErrorReason::INVALID_MAP;
         return res;
     }
 
     int32_t entrance_idx = -1;
     if (!grid::validate_map(static_cast<int32_t>(cmd.rows), static_cast<int32_t>(cmd.cols), cmd.map_lines, entrance_idx)) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_INVALID_MAP;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "create_parking_lot";
+        res.reason = ErrorReason::INVALID_MAP;
         return res;
     }
 
-    // Initialize temporary lot state so failed creation never partially disturbs existing lot
+    // Build new lot locally first
     LotState new_lot;
     new_lot.rows = static_cast<int32_t>(cmd.rows);
     new_lot.cols = static_cast<int32_t>(cmd.cols);
@@ -97,13 +73,25 @@ CommandResult execute_create_parking_lot(LotState& lot, const Command& cmd) {
 CommandResult execute_park(LotState& lot, const Command& cmd) {
     if (!lot.created) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_NOT_CREATED;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "park";
+        res.reason = ErrorReason::PARKING_LOT_NOT_CREATED;
         return res;
     }
-    if (cmd.args.size() != 2) {
+    if (cmd.type == CommandType::PRE_FAILED) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_INVALID_ARGUMENTS;
-        res.command_name = cmd.raw_name;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "park";
+        res.reason = cmd.error_reason;
+        return res;
+    }
+    if (cmd.args.size() != 2 ||
+        !parser::is_valid_string_token(cmd.args[0]) ||
+        !parser::is_valid_string_token(cmd.args[1])) {
+        CommandResult res;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "park";
+        res.reason = ErrorReason::INVALID_ARGUMENTS;
         return res;
     }
 
@@ -112,8 +100,9 @@ CommandResult execute_park(LotState& lot, const Command& cmd) {
 
     if (state::is_registration_parked(lot, reg)) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_REGISTRATION_ALREADY_PARKED;
-        res.registration = reg;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "park";
+        res.reason = ErrorReason::REGISTRATION_ALREADY_PARKED;
         return res;
     }
 
@@ -133,65 +122,87 @@ CommandResult execute_park(LotState& lot, const Command& cmd) {
 CommandResult execute_leave(LotState& lot, const Command& cmd) {
     if (!lot.created) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_NOT_CREATED;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "leave";
+        res.reason = ErrorReason::PARKING_LOT_NOT_CREATED;
+        return res;
+    }
+    if (cmd.type == CommandType::PRE_FAILED) {
+        CommandResult res;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "leave";
+        res.reason = cmd.error_reason;
         return res;
     }
     if (cmd.args.size() != 2) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_INVALID_ARGUMENTS;
-        res.command_name = cmd.raw_name;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "leave";
+        res.reason = ErrorReason::INVALID_ARGUMENTS;
         return res;
     }
 
-    int32_t r = 0;
-    int32_t c = 0;
-    if (!parse_positive_int(cmd.args[0], r) || !parse_positive_int(cmd.args[1], c)) {
+    uint64_t r_val = 0;
+    uint64_t c_val = 0;
+    auto r_res = parser::parse_positive_number_saturating(cmd.args[0], 20000000ULL, r_val);
+    auto c_res = parser::parse_positive_number_saturating(cmd.args[1], 20000000ULL, c_val);
+
+    if (r_res != parser::ParseNumResult::VALID || c_res != parser::ParseNumResult::VALID) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_INVALID_ARGUMENTS;
-        res.command_name = cmd.raw_name;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "leave";
+        res.reason = ErrorReason::INVALID_ARGUMENTS;
         return res;
     }
 
-    Position pos{r, c};
-    if (!grid::is_valid_coordinate(r, c, lot.rows, lot.cols)) {
+    if (r_val > static_cast<uint64_t>(lot.rows) || c_val > static_cast<uint64_t>(lot.cols)) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_SLOT_OUT_OF_RANGE;
-        res.slot = pos;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "leave";
+        res.reason = ErrorReason::SLOT_OUT_OF_RANGE;
         return res;
     }
 
+    int32_t r = static_cast<int32_t>(r_val);
+    int32_t c = static_cast<int32_t>(c_val);
     int32_t cell_idx = static_cast<int32_t>(grid::to_cell_index(r, c, lot.cols));
+
     if (!state::is_usable_slot(lot, cell_idx)) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_NOT_USABLE_SLOT;
-        res.slot = pos;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "leave";
+        res.reason = ErrorReason::NOT_A_USABLE_SLOT;
         return res;
     }
 
     if (!state::is_slot_occupied(lot, cell_idx)) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_SLOT_ALREADY_FREE;
-        res.slot = pos;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "leave";
+        res.reason = ErrorReason::SLOT_ALREADY_FREE;
         return res;
     }
 
     state::free_slot(lot, cell_idx);
     CommandResult res;
     res.kind = ResultKind::SLOT_IS_FREE;
-    res.slot = pos;
+    res.slot = Position{r, c};
     return res;
 }
 
 CommandResult execute_status(const LotState& lot, const Command& cmd) {
     if (!lot.created) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_NOT_CREATED;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "status";
+        res.reason = ErrorReason::PARKING_LOT_NOT_CREATED;
         return res;
     }
-    if (!cmd.args.empty()) {
+    if (cmd.type == CommandType::PRE_FAILED || !cmd.args.empty()) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_INVALID_ARGUMENTS;
-        res.command_name = cmd.raw_name;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "status";
+        res.reason = ErrorReason::INVALID_ARGUMENTS;
         return res;
     }
 
@@ -218,13 +229,16 @@ CommandResult execute_status(const LotState& lot, const Command& cmd) {
 CommandResult execute_reg_nums_for_colour(const LotState& lot, const Command& cmd) {
     if (!lot.created) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_NOT_CREATED;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "registration_numbers_for_cars_with_colour";
+        res.reason = ErrorReason::PARKING_LOT_NOT_CREATED;
         return res;
     }
-    if (cmd.args.size() != 1) {
+    if (cmd.type == CommandType::PRE_FAILED || cmd.args.size() != 1 || !parser::is_valid_string_token(cmd.args[0])) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_INVALID_ARGUMENTS;
-        res.command_name = cmd.raw_name;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "registration_numbers_for_cars_with_colour";
+        res.reason = ErrorReason::INVALID_ARGUMENTS;
         return res;
     }
 
@@ -250,13 +264,16 @@ CommandResult execute_reg_nums_for_colour(const LotState& lot, const Command& cm
 CommandResult execute_slot_nums_for_colour(const LotState& lot, const Command& cmd) {
     if (!lot.created) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_NOT_CREATED;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "slot_numbers_for_cars_with_colour";
+        res.reason = ErrorReason::PARKING_LOT_NOT_CREATED;
         return res;
     }
-    if (cmd.args.size() != 1) {
+    if (cmd.type == CommandType::PRE_FAILED || cmd.args.size() != 1 || !parser::is_valid_string_token(cmd.args[0])) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_INVALID_ARGUMENTS;
-        res.command_name = cmd.raw_name;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "slot_numbers_for_cars_with_colour";
+        res.reason = ErrorReason::INVALID_ARGUMENTS;
         return res;
     }
 
@@ -281,13 +298,16 @@ CommandResult execute_slot_nums_for_colour(const LotState& lot, const Command& c
 CommandResult execute_slot_for_reg(const LotState& lot, const Command& cmd) {
     if (!lot.created) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_NOT_CREATED;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "slot_number_for_registration_number";
+        res.reason = ErrorReason::PARKING_LOT_NOT_CREATED;
         return res;
     }
-    if (cmd.args.size() != 1) {
+    if (cmd.type == CommandType::PRE_FAILED || cmd.args.size() != 1 || !parser::is_valid_string_token(cmd.args[0])) {
         CommandResult res;
-        res.kind = ResultKind::ERROR_INVALID_ARGUMENTS;
-        res.command_name = cmd.raw_name;
+        res.kind = ResultKind::COMMAND_FAILED;
+        res.command_name = "slot_number_for_registration_number";
+        res.reason = ErrorReason::INVALID_ARGUMENTS;
         return res;
     }
 
@@ -309,9 +329,6 @@ CommandResult execute_slot_for_reg(const LotState& lot, const Command& cmd) {
 CommandResult execute(LotState& lot, const Command& cmd) {
     switch (cmd.type) {
         case CommandType::CREATE_PARKING_LOT:
-        case CommandType::INVALID_DIMENSIONS:
-        case CommandType::GRID_TOO_LARGE:
-        case CommandType::INVALID_MAP:
             return execute_create_parking_lot(lot, cmd);
 
         case CommandType::PARK:
@@ -332,10 +349,17 @@ CommandResult execute(LotState& lot, const Command& cmd) {
         case CommandType::SLOT_FOR_REG:
             return execute_slot_for_reg(lot, cmd);
 
-        case CommandType::INVALID_ARGS: {
+        case CommandType::PRE_FAILED: {
             CommandResult res;
-            res.kind = ResultKind::ERROR_INVALID_ARGUMENTS;
+            res.kind = ResultKind::COMMAND_FAILED;
             res.command_name = cmd.raw_name;
+            res.reason = cmd.error_reason;
+            return res;
+        }
+
+        case CommandType::UNEXPECTED_MAP_DATA: {
+            CommandResult res;
+            res.kind = ResultKind::ERROR_UNEXPECTED_MAP_DATA;
             return res;
         }
 
@@ -343,7 +367,7 @@ CommandResult execute(LotState& lot, const Command& cmd) {
         default: {
             CommandResult res;
             res.kind = ResultKind::ERROR_UNKNOWN_COMMAND;
-            res.command_name = cmd.raw_name;
+            res.raw_unknown_name = cmd.raw_name;
             return res;
         }
     }

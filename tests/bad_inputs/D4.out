@@ -1,0 +1,9 @@
+Created a parking lot with 2 usable slots
+Allocated slot: (1, 2)
+Slot (1, 2) is free
+Error: leave failed: slot already free
+Allocated slot: (1, 2)
+Allocated slot: (2, 2)
+Slot     Registration No    Colour
+(1, 2)   C2                 Blue
+(2, 2)   C3                 Grey

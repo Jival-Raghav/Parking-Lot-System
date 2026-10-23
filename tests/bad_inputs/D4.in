@@ -1,0 +1,9 @@
+create_parking_lot 2 2
+EP
+.P
+park C1 Red
+leave 1 2
+leave 1 2
+park C2 Blue
+park C3 Grey
+status

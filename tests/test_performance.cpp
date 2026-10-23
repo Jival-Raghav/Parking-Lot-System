@@ -78,13 +78,19 @@ TEST_CASE(test_perf_scenario_b_100000_commands) {
     for (int i = 0; i < 40000; ++i) {
         std::string reg = "REG-" + std::to_string(i);
         std::string colour = (i % 2 == 0) ? "White" : "Black";
-        Command park_cmd{CommandType::PARK, "park", {reg, colour}, 0, 0, {}, ""};
+        Command park_cmd;
+        park_cmd.type = CommandType::PARK;
+        park_cmd.raw_name = "park";
+        park_cmd.args = {reg, colour};
         commands::execute_park(lot, park_cmd);
     }
 
     for (int i = 0; i < 20000; ++i) {
         std::string reg = "REG-" + std::to_string(i * 2);
-        Command lookup_cmd{CommandType::SLOT_FOR_REG, "slot_number_for_registration_number", {reg}, 0, 0, {}, ""};
+        Command lookup_cmd;
+        lookup_cmd.type = CommandType::SLOT_FOR_REG;
+        lookup_cmd.raw_name = "slot_number_for_registration_number";
+        lookup_cmd.args = {reg};
         commands::execute_slot_for_reg(lot, lookup_cmd);
     }
 
@@ -93,14 +99,20 @@ TEST_CASE(test_perf_scenario_b_100000_commands) {
         auto it = lot.reg_to_cell.find(reg);
         if (it != lot.reg_to_cell.end()) {
             Position pos = grid::to_position(static_cast<size_t>(it->second), lot.cols);
-            Command leave_cmd{CommandType::LEAVE, "leave", {std::to_string(pos.row), std::to_string(pos.col)}, 0, 0, {}, ""};
+            Command leave_cmd;
+            leave_cmd.type = CommandType::LEAVE;
+            leave_cmd.raw_name = "leave";
+            leave_cmd.args = {std::to_string(pos.row), std::to_string(pos.col)};
             commands::execute_leave(lot, leave_cmd);
         }
     }
 
     for (int i = 0; i < 20000; ++i) {
         std::string reg = "NEW-REG-" + std::to_string(i);
-        Command park_cmd{CommandType::PARK, "park", {reg, "Blue"}, 0, 0, {}, ""};
+        Command park_cmd;
+        park_cmd.type = CommandType::PARK;
+        park_cmd.raw_name = "park";
+        park_cmd.args = {reg, "Blue"};
         commands::execute_park(lot, park_cmd);
     }
     auto t1 = high_resolution_clock::now();
@@ -129,13 +141,19 @@ TEST_CASE(test_perf_scenario_c_adversarial_colour_queries) {
 
     // Park 15,000 cars of colour "White"
     for (int i = 0; i < 15000; ++i) {
-        Command park_cmd{CommandType::PARK, "park", {"CAR-" + std::to_string(i), "White"}, 0, 0, {}, ""};
+        Command park_cmd;
+        park_cmd.type = CommandType::PARK;
+        park_cmd.raw_name = "park";
+        park_cmd.args = {"CAR-" + std::to_string(i), "White"};
         commands::execute_park(lot, park_cmd);
     }
 
     auto t0 = high_resolution_clock::now();
     // 500 repeated colour lookups
-    Command query_cmd{CommandType::REG_NUMS_FOR_COLOUR, "registration_numbers_for_cars_with_colour", {"white"}, 0, 0, {}, ""};
+    Command query_cmd;
+    query_cmd.type = CommandType::REG_NUMS_FOR_COLOUR;
+    query_cmd.raw_name = "registration_numbers_for_cars_with_colour";
+    query_cmd.args = {"white"};
     for (int q = 0; q < 500; ++q) {
         CommandResult r = commands::execute_reg_nums_for_colour(lot, query_cmd);
         CHECK_EQ(r.strings.size(), static_cast<size_t>(15000));

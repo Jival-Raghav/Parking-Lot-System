@@ -3,22 +3,14 @@
 
 using namespace parking;
 
-TEST_CASE(test_strip_utf8_bom) {
-    std::string bom = "\xEF\xBB\xBFpark KA-01-1111 Red";
-    std::string_view stripped = parser::strip_utf8_bom(bom);
-    CHECK_EQ(stripped, "park KA-01-1111 Red");
-
-    std::string no_bom = "park KA-01-1111 Red";
-    CHECK_EQ(parser::strip_utf8_bom(no_bom), "park KA-01-1111 Red");
-}
-
-TEST_CASE(test_split_lines_crlf_and_trailing_whitespace) {
-    std::string input = "line1 \t\r\nline2\r\nline3   ";
+TEST_CASE(test_split_lines_crlf_lone_cr_lone_lf) {
+    std::string input = "line1 \t\r\nline2\rline3\nline4   ";
     auto lines = parser::split_lines(input);
-    CHECK_EQ(lines.size(), static_cast<size_t>(3));
-    CHECK_EQ(lines[0], "line1");
-    CHECK_EQ(lines[1], "line2");
-    CHECK_EQ(lines[2], "line3");
+    CHECK_EQ(lines.size(), static_cast<size_t>(4));
+    CHECK_EQ(parser::trim_trailing(lines[0]), "line1");
+    CHECK_EQ(parser::trim_trailing(lines[1]), "line2");
+    CHECK_EQ(parser::trim_trailing(lines[2]), "line3");
+    CHECK_EQ(parser::trim_trailing(lines[3]), "line4");
 }
 
 TEST_CASE(test_tokenize_multiple_spaces_tabs) {
@@ -30,76 +22,97 @@ TEST_CASE(test_tokenize_multiple_spaces_tabs) {
     CHECK_EQ(tokens[2], "White");
 }
 
-TEST_CASE(test_create_parking_lot_map_consumption) {
-    std::string input = 
-        "create_parking_lot 3 3\n"
-        "E..\n"
-        ".#.\n"
-        "..P\n"
-        "park CAR-1 White\n";
+TEST_CASE(test_token_validation) {
+    // Valid token
+    CHECK(parser::is_valid_string_token("KA-01-1234"));
+    CHECK(parser::is_valid_string_token("White"));
+    // Non-ASCII allowed (>= 0x80)
+    CHECK(parser::is_valid_string_token("R\xC3\xB8" "d"));
 
-    auto cmds = parser::parse_input(input);
-    CHECK_EQ(cmds.size(), static_cast<size_t>(2));
-    CHECK(cmds[0].type == CommandType::CREATE_PARKING_LOT);
-    CHECK_EQ(cmds[0].rows, 3);
-    CHECK_EQ(cmds[0].cols, 3);
-    CHECK_EQ(cmds[0].map_lines.size(), static_cast<size_t>(3));
-    CHECK_EQ(cmds[0].map_lines[0], "E..");
-    CHECK_EQ(cmds[0].map_lines[1], ".#.");
-    CHECK_EQ(cmds[0].map_lines[2], "..P");
+    // Control characters rejected (< 0x20 or 0x7F)
+    CHECK(!parser::is_valid_string_token(std::string("CAR\x01-1")));
+    CHECK(!parser::is_valid_string_token(std::string("CAR\x7F-1")));
+    CHECK(!parser::is_valid_string_token(std::string("CAR\x1F-1")));
 
-    CHECK(cmds[1].type == CommandType::PARK);
-    CHECK_EQ(cmds[1].args.size(), static_cast<size_t>(2));
-    CHECK_EQ(cmds[1].args[0], "CAR-1");
+    // Empty rejected
+    CHECK(!parser::is_valid_string_token(""));
+
+    // Over 256 bytes rejected
+    std::string long_tok(257, 'A');
+    CHECK(!parser::is_valid_string_token(long_tok));
+    std::string ok_tok(256, 'A');
+    CHECK(parser::is_valid_string_token(ok_tok));
 }
 
-TEST_CASE(test_invalid_dimensions) {
-    // Decimal "2.5"
-    auto c1 = parser::parse_input("create_parking_lot 2.5 3\n");
-    CHECK_EQ(c1.size(), static_cast<size_t>(1));
-    CHECK(c1[0].type == CommandType::INVALID_DIMENSIONS);
+TEST_CASE(test_parse_positive_number_saturating) {
+    uint64_t val = 0;
+    // Valid digits
+    CHECK(parser::parse_positive_number_saturating("5", 100, val) == parser::ParseNumResult::VALID);
+    CHECK_EQ(val, 5ULL);
 
-    // Negative "-3"
-    auto c2 = parser::parse_input("create_parking_lot -3 3\n");
-    CHECK(c2[0].type == CommandType::INVALID_DIMENSIONS);
+    // Leading zeros allowed
+    CHECK(parser::parse_positive_number_saturating("01", 100, val) == parser::ParseNumResult::VALID);
+    CHECK_EQ(val, 1ULL);
 
-    // Signed "+3"
-    auto c3 = parser::parse_input("create_parking_lot +3 3\n");
-    CHECK(c3[0].type == CommandType::INVALID_DIMENSIONS);
+    // Zero
+    CHECK(parser::parse_positive_number_saturating("0", 100, val) == parser::ParseNumResult::ZERO);
+    CHECK(parser::parse_positive_number_saturating("000", 100, val) == parser::ParseNumResult::ZERO);
 
-    // Zero "0"
-    auto c4 = parser::parse_input("create_parking_lot 0 3\n");
-    CHECK(c4[0].type == CommandType::INVALID_DIMENSIONS);
+    // Invalid characters (signs, decimals, hex, letters, parens)
+    CHECK(parser::parse_positive_number_saturating("+5", 100, val) == parser::ParseNumResult::INVALID_CHARS);
+    CHECK(parser::parse_positive_number_saturating("-5", 100, val) == parser::ParseNumResult::INVALID_CHARS);
+    CHECK(parser::parse_positive_number_saturating("2.5", 100, val) == parser::ParseNumResult::INVALID_CHARS);
+    CHECK(parser::parse_positive_number_saturating("0x5", 100, val) == parser::ParseNumResult::INVALID_CHARS);
+    CHECK(parser::parse_positive_number_saturating("(1", 100, val) == parser::ParseNumResult::INVALID_CHARS);
+    CHECK(parser::parse_positive_number_saturating("1,", 100, val) == parser::ParseNumResult::INVALID_CHARS);
 
-    // Overflow
-    auto c5 = parser::parse_input("create_parking_lot 99999999999999999999 3\n");
-    CHECK(c5[0].type == CommandType::INVALID_DIMENSIONS);
+    // Saturation
+    CHECK(parser::parse_positive_number_saturating("999999999999999999999999999999", 20000000ULL, val) == parser::ParseNumResult::VALID);
+    CHECK_EQ(val, 20000001ULL);
 }
 
-TEST_CASE(test_grid_too_large) {
-    auto c1 = parser::parse_input("create_parking_lot 5000 5000\n"); // 25,000,000 > 20,000,000
-    CHECK_EQ(c1.size(), static_cast<size_t>(1));
-    CHECK(c1[0].type == CommandType::GRID_TOO_LARGE);
-}
-
-TEST_CASE(test_fewer_map_lines_eof_early) {
+TEST_CASE(test_create_parking_lot_early_stop_on_known_command) {
+    // 5 rows declared, but 3rd line is 'status' (known command)
     std::string input = 
         "create_parking_lot 5 3\n"
         "E..\n"
-        ".#.\n"; // Only 2 lines instead of 5
+        "..P\n"
+        "status\n";
     auto cmds = parser::parse_input(input);
-    CHECK_EQ(cmds.size(), static_cast<size_t>(1));
-    CHECK(cmds[0].type == CommandType::INVALID_MAP);
-    CHECK_EQ(cmds[0].map_lines.size(), static_cast<size_t>(2));
+    CHECK_EQ(cmds.size(), static_cast<size_t>(2));
+    CHECK(cmds[0].type == CommandType::CREATE_PARKING_LOT);
+    CHECK(!cmds[0].map_is_valid); // early stop -> invalid map
+    CHECK(cmds[0].error_reason == ErrorReason::INVALID_MAP);
+    CHECK(cmds[1].type == CommandType::STATUS);
 }
 
-TEST_CASE(test_case_sensitivity_of_command_names) {
-    auto cmds = parser::parse_input("PARK CAR-1 White\nStatus\n");
+TEST_CASE(test_unexpected_map_data) {
+    std::string input = 
+        "create_parking_lot 1 2\n"
+        "EP\n"
+        "..\n"
+        "##\n"
+        "park C1 Red\n";
+    auto cmds = parser::parse_input(input);
+    CHECK_EQ(cmds.size(), static_cast<size_t>(3));
+    CHECK(cmds[0].type == CommandType::CREATE_PARKING_LOT);
+    CHECK(cmds[0].map_is_valid);
+    CHECK(cmds[1].type == CommandType::UNEXPECTED_MAP_DATA);
+    CHECK(cmds[2].type == CommandType::PARK);
+}
+
+TEST_CASE(test_orphaned_map_silently_swallowed_on_failed_create) {
+    std::string input = 
+        "create_parking_lot invalid_args\n"
+        "E..\n"
+        "...\n"
+        "..P\n"
+        "status\n";
+    auto cmds = parser::parse_input(input);
     CHECK_EQ(cmds.size(), static_cast<size_t>(2));
-    CHECK(cmds[0].type == CommandType::UNKNOWN_COMMAND);
-    CHECK_EQ(cmds[0].raw_name, "PARK");
-    CHECK(cmds[1].type == CommandType::UNKNOWN_COMMAND);
-    CHECK_EQ(cmds[1].raw_name, "Status");
+    CHECK(cmds[0].type == CommandType::PRE_FAILED);
+    CHECK(cmds[0].error_reason == ErrorReason::INVALID_ARGUMENTS);
+    CHECK(cmds[1].type == CommandType::STATUS);
 }
 
 int main() {

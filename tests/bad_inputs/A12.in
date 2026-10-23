@@ -1,0 +1,5 @@
+create_parking_lot 1 2
+EP
+park CAR-1 Red
+create_parking_lot abc def
+status

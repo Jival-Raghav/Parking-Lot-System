@@ -1,6 +1,52 @@
 #include "formatter.h"
+#include <algorithm>
 
 namespace parking::formatter {
+
+const char* reason_to_string(ErrorReason reason) {
+    switch (reason) {
+        case ErrorReason::INVALID_ARGUMENTS:
+            return "invalid arguments";
+        case ErrorReason::PARKING_LOT_NOT_CREATED:
+            return "parking lot not created";
+        case ErrorReason::LOT_ALREADY_EXISTS:
+            return "lot already exists";
+        case ErrorReason::GRID_TOO_LARGE:
+            return "grid too large";
+        case ErrorReason::INVALID_MAP:
+            return "invalid map";
+        case ErrorReason::REGISTRATION_ALREADY_PARKED:
+            return "registration already parked";
+        case ErrorReason::SLOT_OUT_OF_RANGE:
+            return "slot out of range";
+        case ErrorReason::NOT_A_USABLE_SLOT:
+            return "not a usable slot";
+        case ErrorReason::SLOT_ALREADY_FREE:
+            return "slot already free";
+    }
+    return "unknown error";
+}
+
+std::string sanitize_command_name(std::string_view name) {
+    std::string sanitized;
+    size_t limit = std::min(name.size(), static_cast<size_t>(32));
+    sanitized.reserve(36);
+
+    for (size_t i = 0; i < limit; ++i) {
+        unsigned char uc = static_cast<unsigned char>(name[i]);
+        if (uc >= 0x20 && uc <= 0x7E) {
+            sanitized.push_back(static_cast<char>(uc));
+        } else {
+            sanitized.push_back('?');
+        }
+    }
+
+    if (name.size() > 32) {
+        sanitized += "...";
+    }
+
+    return sanitized;
+}
 
 void format_result(const CommandResult& res, std::string& out_buffer) {
     switch (res.kind) {
@@ -70,51 +116,16 @@ void format_result(const CommandResult& res, std::string& out_buffer) {
             out_buffer += "Sorry, parking lot is full\n";
             break;
 
-        case ResultKind::ERROR_NOT_CREATED:
-            out_buffer += "Error: parking lot not created\n";
-            break;
-
-        case ResultKind::ERROR_ALREADY_CREATED:
-            out_buffer += "Error: parking lot already created\n";
+        case ResultKind::COMMAND_FAILED:
+            out_buffer += "Error: " + res.command_name + " failed: " + reason_to_string(res.reason) + "\n";
             break;
 
         case ResultKind::ERROR_UNKNOWN_COMMAND:
-            out_buffer += "Error: unknown command '" + res.command_name + "'\n";
+            out_buffer += "Error: unknown command '" + sanitize_command_name(res.raw_unknown_name) + "'\n";
             break;
 
-        case ResultKind::ERROR_INVALID_ARGUMENTS:
-            out_buffer += "Error: invalid arguments for " + res.command_name + "\n";
-            break;
-
-        case ResultKind::ERROR_INVALID_DIMENSIONS:
-            out_buffer += "Error: invalid dimensions\n";
-            break;
-
-        case ResultKind::ERROR_INVALID_MAP:
-            out_buffer += "Error: invalid map\n";
-            break;
-
-        case ResultKind::ERROR_GRID_TOO_LARGE:
-            out_buffer += "Error: grid too large\n";
-            break;
-
-        case ResultKind::ERROR_REGISTRATION_ALREADY_PARKED:
-            out_buffer += "Error: registration " + res.registration + " is already parked\n";
-            break;
-
-        case ResultKind::ERROR_SLOT_OUT_OF_RANGE:
-            out_buffer += "Error: slot (" + std::to_string(res.slot.row) + ", " +
-                          std::to_string(res.slot.col) + ") is out of range\n";
-            break;
-
-        case ResultKind::ERROR_NOT_USABLE_SLOT:
-            out_buffer += "Error: (" + std::to_string(res.slot.row) + ", " +
-                          std::to_string(res.slot.col) + ") is not a usable parking slot\n";
-            break;
-
-        case ResultKind::ERROR_SLOT_ALREADY_FREE:
-            out_buffer += "Error: slot (" + std::to_string(res.slot.row) + ", " +
-                          std::to_string(res.slot.col) + ") is already free\n";
+        case ResultKind::ERROR_UNEXPECTED_MAP_DATA:
+            out_buffer += "Error: unexpected map data ignored\n";
             break;
     }
 }

@@ -1,0 +1,4 @@
+Error: unknown command 'foo'
+Error: park failed: parking lot not created
+Error: leave failed: parking lot not created
+Error: status failed: parking lot not created

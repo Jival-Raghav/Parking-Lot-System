@@ -1,0 +1,7 @@
+create_parking_lot abc def
+E..
+...
+..P
+create_parking_lot 1 2
+EP
+park CAR-1 Red

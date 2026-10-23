@@ -39,6 +39,19 @@ struct Car {
     std::string colour; // original colour string as entered
 };
 
+// Specific error reasons per requirement specification
+enum class ErrorReason {
+    INVALID_ARGUMENTS,           // "invalid arguments"
+    PARKING_LOT_NOT_CREATED,     // "parking lot not created"
+    LOT_ALREADY_EXISTS,          // "lot already exists"
+    GRID_TOO_LARGE,              // "grid too large"
+    INVALID_MAP,                 // "invalid map"
+    REGISTRATION_ALREADY_PARKED, // "registration already parked"
+    SLOT_OUT_OF_RANGE,           // "slot out of range"
+    NOT_A_USABLE_SLOT,           // "not a usable slot"
+    SLOT_ALREADY_FREE            // "slot already free"
+};
+
 // Command representation from parsing
 enum class CommandType {
     CREATE_PARKING_LOT,
@@ -49,10 +62,8 @@ enum class CommandType {
     SLOT_NUMS_FOR_COLOUR,
     SLOT_FOR_REG,
     UNKNOWN_COMMAND,
-    INVALID_ARGS,
-    INVALID_DIMENSIONS,
-    INVALID_MAP,
-    GRID_TOO_LARGE
+    UNEXPECTED_MAP_DATA,
+    PRE_FAILED // Command that failed during parsing/pre-validation
 };
 
 struct Command {
@@ -64,12 +75,13 @@ struct Command {
     int64_t rows{0};
     int64_t cols{0};
     std::vector<std::string> map_lines;
+    bool map_is_valid{true};
     
-    // For parsing errors detected early:
-    std::string error_detail;
+    // Error reason if pre-failed
+    ErrorReason error_reason{ErrorReason::INVALID_ARGUMENTS};
 };
 
-// Result kinds for commands
+// Result kinds for command outputs
 enum class ResultKind {
     CREATE_SUCCESS,
     ALLOCATED_SLOT,
@@ -81,17 +93,9 @@ enum class ResultKind {
     SINGLE_SLOT,
     NOT_FOUND,
     LOT_FULL,
-    ERROR_NOT_CREATED,
-    ERROR_ALREADY_CREATED,
-    ERROR_UNKNOWN_COMMAND,
-    ERROR_INVALID_ARGUMENTS,
-    ERROR_INVALID_DIMENSIONS,
-    ERROR_INVALID_MAP,
-    ERROR_GRID_TOO_LARGE,
-    ERROR_REGISTRATION_ALREADY_PARKED,
-    ERROR_SLOT_OUT_OF_RANGE,
-    ERROR_NOT_USABLE_SLOT,
-    ERROR_SLOT_ALREADY_FREE
+    COMMAND_FAILED,               // "Error: <command_name> failed: <reason>"
+    ERROR_UNKNOWN_COMMAND,        // "Error: unknown command '<sanitized_name>'"
+    ERROR_UNEXPECTED_MAP_DATA     // "Error: unexpected map data ignored"
 };
 
 struct OccupiedSlotInfo {
@@ -101,17 +105,18 @@ struct OccupiedSlotInfo {
 };
 
 struct CommandResult {
-    ResultKind kind{ResultKind::ERROR_UNKNOWN_COMMAND};
-    std::string command_name; // for invalid arguments and unknown command
-    Position slot{0, 0};      // for allocated slot, slot is free, slot errors, single slot
-    std::string registration; // for registration already parked
+    ResultKind kind{ResultKind::COMMAND_FAILED};
+    std::string command_name; // for "Error: <command_name> failed: <reason>"
+    ErrorReason reason{ErrorReason::INVALID_ARGUMENTS};
+    Position slot{0, 0};      // for allocated slot, slot is free, single slot
     int32_t usable_slots_count{0}; // for create_parking_lot
     std::vector<OccupiedSlotInfo> status_rows; // for status table
     std::vector<std::string> strings; // for comma-separated reg numbers
     std::vector<Position> slots;      // for comma-separated slot positions
+    std::string raw_unknown_name;     // for sanitized unknown command printing
 };
 
-// All state lives in LotState, passed by reference to functions
+// All lot state lives in LotState, passed by reference to functions
 struct LotState {
     bool created{false};
     int32_t rows{0};

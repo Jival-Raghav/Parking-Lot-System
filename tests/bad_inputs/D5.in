@@ -1,0 +1,6 @@
+create_parking_lot 1 2
+EP
+park C1 Purple
+registration_numbers_for_cars_with_colour Purple
+leave 1 2
+registration_numbers_for_cars_with_colour Purple
