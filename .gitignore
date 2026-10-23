@@ -1,0 +1,12 @@
+build/
+parking
+parking.exe
+*.o
+*.obj
+*.exe
+*.pdb
+*.ilk
+*.lib
+large_input.txt
+.vs/
+CMakeFiles/
