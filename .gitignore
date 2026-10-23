@@ -8,5 +8,7 @@ parking.exe
 *.ilk
 *.lib
 large_input.txt
+big.txt
+benchmark_100k.txt
 .vs/
 CMakeFiles/

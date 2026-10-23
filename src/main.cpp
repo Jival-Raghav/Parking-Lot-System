@@ -112,9 +112,19 @@ int main(int argc, char* argv[]) {
 
         parking::LotState lot;
 
+        static constexpr size_t FLUSH_THRESHOLD = 32 * 1024 * 1024;
         for (const auto& cmd : cmds) {
             parking::CommandResult res = parking::commands::execute(lot, cmd);
             parking::formatter::format_result(res, out_buffer);
+
+            if (out_buffer.size() >= FLUSH_THRESHOLD) {
+                size_t written = std::fwrite(out_buffer.data(), 1, out_buffer.size(), stdout);
+                if (written != out_buffer.size()) {
+                    std::fprintf(stderr, "Error: failed to write output\n");
+                    return 1;
+                }
+                out_buffer.clear();
+            }
         }
 
         if (!out_buffer.empty()) {
@@ -123,6 +133,7 @@ int main(int argc, char* argv[]) {
                 std::fprintf(stderr, "Error: failed to write output\n");
                 return 1;
             }
+            out_buffer.clear();
         }
 
         return 0;
