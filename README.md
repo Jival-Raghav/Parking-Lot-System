@@ -6,11 +6,16 @@ A high-performance, modular, zero-dependency command-line parking lot management
 
 ## 1. Build and Run
 
-> **Output Destination**: Output is written directly to standard output (**`stdout`**). To save output to a text file, use shell redirection (`> output.txt`).
+> **Important — Working Directory**: Always ensure your terminal or command prompt is navigated to the project root folder (the directory containing `Makefile`, `CMakeLists.txt`, `src/`, and `input.txt`) before running any commands:
+> ```bash
+> cd /path/to/Latlong
+> ```
+>
+> **Output Destination**: Output is printed directly to standard output (**`stdout`**). To save output to a text file, use standard shell redirection (`> output.txt`).
 
 ### On Linux / macOS / WSL
 
-#### Prerequisites & Installation Commands
+#### 1. Prerequisites & Installation Commands
 Install a C++17 compiler (`g++` or `clang++`), `make`, and optionally `cmake`:
 
 - **Ubuntu / Debian / WSL (Ubuntu)**:
@@ -32,7 +37,9 @@ Install a C++17 compiler (`g++` or `clang++`), `make`, and optionally `cmake`:
   brew install gcc make cmake
   ```
 
-#### Build Commands
+#### 2. Build Commands
+Ensure you are in the project root directory (`cd /path/to/Latlong`), then run:
+
 Using `make` (defaults to `g++` with `-O2 -Wall -Wextra -pedantic`):
 ```bash
 make
@@ -46,7 +53,8 @@ Or direct compilation without `make`:
 g++ -std=c++17 -O2 -Wall -Wextra -pedantic src/*.cpp -o parking
 ```
 
-#### Run Command
+#### 3. Run Command
+Run the compiled `./parking` binary with `input.txt`:
 ```bash
 # Prints output directly to terminal (stdout)
 ./parking input.txt
@@ -59,7 +67,13 @@ g++ -std=c++17 -O2 -Wall -Wextra -pedantic src/*.cpp -o parking
 
 ### On Windows
 
-#### Prerequisites & Installation Commands
+#### 1. Working Directory
+Open PowerShell, Developer Command Prompt, or Terminal and navigate to the project folder:
+```powershell
+cd C:\path\to\Latlong
+```
+
+#### 2. Prerequisites & Installation Commands
 Install a C++17 toolchain using `winget` (Windows 10/11 built-in), Chocolatey, Scoop, or WSL:
 
 - **Option 1: Windows Subsystem for Linux (WSL - Recommended)**:
@@ -67,7 +81,7 @@ Install a C++17 toolchain using `winget` (Windows 10/11 built-in), Chocolatey, S
   ```powershell
   wsl --install
   ```
-  *(Then follow the Linux instructions inside WSL).*
+  *(Then open WSL, `cd /mnt/c/path/to/Latlong`, and follow the Linux instructions).*
 
 - **Option 2: MinGW-w64 (GCC & Make for native Windows)**:
   Via `winget`:
@@ -87,7 +101,10 @@ Install a C++17 toolchain using `winget` (Windows 10/11 built-in), Chocolatey, S
   ```
   *(Or install "Desktop development with C++" via the Visual Studio Installer GUI).*
 
-#### Option A: Using MSVC (Developer Command Prompt / PowerShell)
+#### 3. Build & Run Options
+
+##### Option A: Using MSVC (Developer Command Prompt / PowerShell)
+Compile:
 ```cmd
 cl /std:c++17 /O2 /W4 /EHsc src/*.cpp /Feparking.exe
 ```
@@ -96,7 +113,8 @@ Run:
 parking.exe input.txt
 ```
 
-#### Option B: Using MinGW-w64 (g++)
+##### Option B: Using MinGW-w64 (g++)
+Compile:
 ```powershell
 g++ -std=c++17 -O2 -Wall -Wextra -pedantic src/*.cpp -o parking.exe
 ```
@@ -105,7 +123,8 @@ Run:
 .\parking.exe input.txt
 ```
 
-#### Option C: Using CMake (Cross-platform)
+##### Option C: Using CMake (Cross-platform)
+Compile:
 ```powershell
 cmake -B build
 cmake --build build --config Release
@@ -115,8 +134,8 @@ Run:
 .\build\Release\parking.exe input.txt
 ```
 
-#### Option D: Using Windows Subsystem for Linux (WSL)
-If using WSL from Windows PowerShell:
+##### Option D: Using Windows Subsystem for Linux (WSL)
+From Windows PowerShell in the project directory:
 ```powershell
 wsl make
 wsl ./parking input.txt
