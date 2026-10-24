@@ -10,9 +10,27 @@ A high-performance, modular, zero-dependency command-line parking lot management
 
 ### On Linux / macOS / WSL
 
-#### Prerequisites
-- A C++17 compiler (`g++` 8+ or `clang++` 7+)
-- `make` (GNU Make 4.0+)
+#### Prerequisites & Installation Commands
+Install a C++17 compiler (`g++` or `clang++`), `make`, and optionally `cmake`:
+
+- **Ubuntu / Debian / WSL (Ubuntu)**:
+  ```bash
+  sudo apt update && sudo apt install -y build-essential g++ make cmake git
+  ```
+- **Fedora / RHEL / CentOS**:
+  ```bash
+  sudo dnf install -y gcc-c++ make cmake git
+  ```
+- **Arch Linux**:
+  ```bash
+  sudo pacman -S --needed base-devel gcc make cmake git
+  ```
+- **macOS (Xcode Command Line Tools / Homebrew)**:
+  ```bash
+  xcode-select --install
+  # Or via Homebrew:
+  brew install gcc make cmake
+  ```
 
 #### Build Commands
 Using `make` (defaults to `g++` with `-O2 -Wall -Wextra -pedantic`):
@@ -41,11 +59,33 @@ g++ -std=c++17 -O2 -Wall -Wextra -pedantic src/*.cpp -o parking
 
 ### On Windows
 
-#### Prerequisites
-Choose one of the following toolchains:
-1. **MSVC** (Visual Studio 2019+ or Build Tools via "Developer Command Prompt")
-2. **MinGW-w64** (`g++`)
-3. **CMake** (3.15+) with any generator
+#### Prerequisites & Installation Commands
+Install a C++17 toolchain using `winget` (Windows 10/11 built-in), Chocolatey, Scoop, or WSL:
+
+- **Option 1: Windows Subsystem for Linux (WSL - Recommended)**:
+  If WSL is not yet installed:
+  ```powershell
+  wsl --install
+  ```
+  *(Then follow the Linux instructions inside WSL).*
+
+- **Option 2: MinGW-w64 (GCC & Make for native Windows)**:
+  Via `winget`:
+  ```powershell
+  winget install -e --id MSYS2.MSYS2
+  ```
+  Or via Chocolatey / Scoop:
+  ```powershell
+  choco install mingw make cmake -y
+  # Or with Scoop: scoop install gcc make cmake
+  ```
+
+- **Option 3: Visual Studio C++ Build Tools (MSVC `cl.exe`)**:
+  Via `winget`:
+  ```powershell
+  winget install -e --id Microsoft.VisualStudio.2022.BuildTools --override "--passive --add Microsoft.VisualStudio.Workload.VCTools"
+  ```
+  *(Or install "Desktop development with C++" via the Visual Studio Installer GUI).*
 
 #### Option A: Using MSVC (Developer Command Prompt / PowerShell)
 ```cmd
