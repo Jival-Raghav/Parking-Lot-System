@@ -1,0 +1,18 @@
+Created a parking lot with 6 usable slots
+Allocated slot: (2, 3)
+Allocated slot: (3, 2)
+Allocated slot: (1, 6)
+Allocated slot: (3, 4)
+Allocated slot: (4, 4)
+Allocated slot: (4, 6)
+Sorry, parking lot is full
+Slot     Registration No    Colour
+(1, 6)   C-3                Blue
+(2, 3)   C-1                Red
+(3, 2)   C-2                Red
+(3, 4)   C-4                Blue
+(4, 4)   C-5                Green
+(4, 6)   C-6                Green
+Slot (2, 3) is free
+Allocated slot: (2, 3)
+(2, 3), (3, 2)

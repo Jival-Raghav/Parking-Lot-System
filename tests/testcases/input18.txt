@@ -1,0 +1,11 @@
+create_parking_lot 2 4
+E..P
+P#.P
+park A-1 Red
+park B-1 Blue
+create_parking_lot 2 4
+E..P
+P#.P
+status
+park C-1 Green
+park D-1 Green

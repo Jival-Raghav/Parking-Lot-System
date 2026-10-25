@@ -1,0 +1,16 @@
+create_parking_lot 2 4
+E..p
+P#.P
+create_parking_lot 2 4
+E.1P
+P#.P
+create_parking_lot 2 4
+e..P
+P#.P
+create_parking_lot 2 4
+E..P
+P#.X
+create_parking_lot 2 4
+E..P
+P#.P
+park KA-01 Red

@@ -1,0 +1,9 @@
+park KA-01 Red
+status
+slot_number_for_registration_number KA-01
+leave 1 1
+create_parking_lot 2 4
+E..P
+P#.P
+park KA-01 Red
+status

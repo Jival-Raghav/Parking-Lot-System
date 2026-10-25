@@ -1,0 +1,12 @@
+﻿create_parking_lot 2 4
+E..P
+P#.P
+
+park	KA-01   Red
+park  KA-02	Blue
+
+
+status  
+leave 2 1
+slot_numbers_for_cars_with_colour   BLUE
+status

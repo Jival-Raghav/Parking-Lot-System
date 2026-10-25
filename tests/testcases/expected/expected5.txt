@@ -1,0 +1,10 @@
+Created a parking lot with 3 usable slots
+Allocated slot: (2, 1)
+Allocated slot: (1, 4)
+Slot     Registration No    Colour
+(1, 4)   KA-02              Blue
+(2, 1)   KA-01              Red
+Slot (2, 1) is free
+(1, 4)
+Slot     Registration No    Colour
+(1, 4)   KA-02              Blue

@@ -1,0 +1,16 @@
+create_parking_lot 4 6
+E....P
+.#P#.#
+.PPP..
+#.#P.P
+park C-1 Red
+park C-2 Red
+park C-3 Blue
+park C-4 Blue
+park C-5 Green
+park C-6 Green
+park C-7 Green
+status
+leave 2 3
+park C-8 Red
+slot_numbers_for_cars_with_colour Red

@@ -1,0 +1,8 @@
+create_parking_lot 1000000 1000000
+create_parking_lot 99999999999999999999 5
+create_parking_lot 5 99999999999999999999
+create_parking_lot 5000 5000
+create_parking_lot 2 4
+E..P
+P#.P
+park KA-01 Red

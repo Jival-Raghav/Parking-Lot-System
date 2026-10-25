@@ -1,0 +1,14 @@
+create_parking_lot 3 5
+P.E.P
+##.##
+P.P.P
+park MH-01 Red
+park MH-02 red
+park MH-03 RED
+park MH-04 Blue
+registration_numbers_for_cars_with_colour rEd
+leave 1 5
+park MH-04 Blue
+slot_numbers_for_cars_with_colour RED
+slot_number_for_registration_number MH-04
+status

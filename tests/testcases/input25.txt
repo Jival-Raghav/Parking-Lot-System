@@ -1,0 +1,5 @@
+park A-1 Red
+create_parking_lot 5 7
+E.....P
+P#P#P.P
+P.....#

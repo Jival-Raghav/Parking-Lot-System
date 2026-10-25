@@ -1,0 +1,7 @@
+create_parking_lot 2 4
+E..P
+P#.P
+P..#
+#.P.
+park KA-01 Red
+status

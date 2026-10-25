@@ -1,0 +1,6 @@
+Created a parking lot with 0 usable slots
+Sorry, parking lot is full
+Parking lot is empty
+Not found
+Not found
+Not found

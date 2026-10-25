@@ -1,0 +1,10 @@
+create_parking_lot 4 4
+E..P
+P#.P
+park A-1 Red
+park B-1 Blue
+status
+create_parking_lot 2 4
+E..P
+P#.P
+park KA-01 Red
