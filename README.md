@@ -96,16 +96,23 @@ If you want to build natively on Windows without WSL:
    ```powershell
    winget install -e --id BrechtSanders.WinLibs.POSIX.UCRT
    ```
-2. Close and reopen PowerShell (to refresh environment variables), then clone and enter the repository:
+2. **Reload PATH environment**:
+   Because already-running editors (like VS Code) do not automatically pick up newly installed programs, either **restart VS Code completely**, OR run this one command in your current PowerShell terminal to refresh your PATH immediately:
+   ```powershell
+   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+   ```
+   *(Verify by running `g++ --version`).*
+
+3. Clone and enter the repository:
    ```powershell
    git clone https://github.com/Jival-Raghav/Parking-Lot-System.git
    cd Parking-Lot-System
    ```
-3. Compile the executable:
+4. Compile the executable:
    ```powershell
    g++ -std=c++17 -O2 -Wall -Wextra -pedantic src/*.cpp -o parking.exe
    ```
-4. Run the program:
+5. Run the program:
    ```powershell
    .\parking.exe input.txt
    ```
