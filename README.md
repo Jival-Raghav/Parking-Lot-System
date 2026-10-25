@@ -6,16 +6,18 @@ A high-performance, modular, zero-dependency command-line parking lot management
 
 ## 1. Build and Run
 
-> **Important — Working Directory**: Always ensure your terminal or command prompt is navigated to the project root folder (the directory containing `Makefile`, `CMakeLists.txt`, `src/`, and `input.txt`) before running any commands:
-> ```bash
-> cd /path/to/Latlong
-> ```
->
-> **Output Destination**: Output is printed directly to standard output (**`stdout`**). To save output to a text file, use standard shell redirection (`> output.txt`).
+> **Output Destination**: Output is written directly to standard output (**`stdout`**). To save output to a text file, use standard shell redirection (`> output.txt`).
 
 ### On Linux / macOS / WSL
 
-#### 1. Prerequisites & Installation Commands
+#### 1. Clone & Navigate to Repository
+Open your terminal and clone the repository:
+```bash
+git clone https://github.com/Jival-Raghav/Parking-Lot-System.git
+cd Parking-Lot-System
+```
+
+#### 2. Prerequisites & Installation Commands
 Install a C++17 compiler (`g++` or `clang++`), `make`, and optionally `cmake`:
 
 - **Ubuntu / Debian / WSL (Ubuntu)**:
@@ -37,8 +39,8 @@ Install a C++17 compiler (`g++` or `clang++`), `make`, and optionally `cmake`:
   brew install gcc make cmake
   ```
 
-#### 2. Build Commands
-Ensure you are in the project root directory (`cd /path/to/Latlong`), then run:
+#### 3. Build Commands
+Ensure you are in the `Parking-Lot-System` directory, then compile:
 
 Using `make` (defaults to `g++` with `-O2 -Wall -Wextra -pedantic`):
 ```bash
@@ -53,7 +55,7 @@ Or direct compilation without `make`:
 g++ -std=c++17 -O2 -Wall -Wextra -pedantic src/*.cpp -o parking
 ```
 
-#### 3. Run Command
+#### 4. Run Command
 Run the compiled `./parking` binary with `input.txt`:
 ```bash
 # Prints output directly to terminal (stdout)
@@ -67,10 +69,11 @@ Run the compiled `./parking` binary with `input.txt`:
 
 ### On Windows
 
-#### 1. Working Directory
-Open PowerShell, Developer Command Prompt, or Terminal and navigate to the project folder:
+#### 1. Clone & Navigate to Repository
+Open PowerShell, Developer Command Prompt, or Terminal:
 ```powershell
-cd C:\path\to\Latlong
+git clone https://github.com/Jival-Raghav/Parking-Lot-System.git
+cd Parking-Lot-System
 ```
 
 #### 2. Prerequisites & Installation Commands
@@ -81,7 +84,7 @@ Install a C++17 toolchain using `winget` (Windows 10/11 built-in), Chocolatey, S
   ```powershell
   wsl --install
   ```
-  *(Then open WSL, `cd /mnt/c/path/to/Latlong`, and follow the Linux instructions).*
+  *(Then open WSL, `cd /mnt/c/path/to/Parking-Lot-System`, and follow the Linux instructions).*
 
 - **Option 2: MinGW-w64 (GCC & Make for native Windows)**:
   Via `winget`:
