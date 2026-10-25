@@ -8,141 +8,107 @@ A high-performance, modular, zero-dependency command-line parking lot management
 
 > **Output Destination**: Output is written directly to standard output (**`stdout`**). To save output to a text file, use standard shell redirection (`> output.txt`).
 
-### On Linux / macOS / WSL
+---
 
-#### 1. Clone & Navigate to Repository
-Open your terminal and clone the repository:
-```bash
-git clone https://github.com/Jival-Raghav/Parking-Lot-System.git
-cd Parking-Lot-System
-```
+### A. On Linux (Ubuntu / Debian / WSL)
 
-#### 2. Prerequisites & Installation Commands
-Install a C++17 compiler (`g++` or `clang++`), `make`, and optionally `cmake`:
+Follow these steps in order to clone, install tools, build, and run:
 
-- **Ubuntu / Debian / WSL (Ubuntu)**:
-  ```bash
-  sudo apt update && sudo apt install -y build-essential g++ make cmake git
-  ```
-- **Fedora / RHEL / CentOS**:
-  ```bash
-  sudo dnf install -y gcc-c++ make cmake git
-  ```
-- **Arch Linux**:
-  ```bash
-  sudo pacman -S --needed base-devel gcc make cmake git
-  ```
-- **macOS (Xcode Command Line Tools / Homebrew)**:
-  ```bash
-  xcode-select --install
-  # Or via Homebrew:
-  brew install gcc make cmake
-  ```
+1. **Clone & Enter the Repository**:
+   ```bash
+   git clone https://github.com/Jival-Raghav/Parking-Lot-System.git
+   cd Parking-Lot-System
+   ```
 
-#### 3. Build Commands
-Ensure you are in the `Parking-Lot-System` directory, then compile:
+2. **Install Prerequisites (Compiler & Make)**:
+   ```bash
+   sudo apt update && sudo apt install -y build-essential g++ make
+   ```
+   *(For Fedora/RHEL use: `sudo dnf install -y gcc-c++ make`; for Arch Linux use: `sudo pacman -S --needed base-devel gcc make`).*
 
-Using `make` (defaults to `g++` with `-O2 -Wall -Wextra -pedantic`):
-```bash
-make
-```
-Or to compile using `clang++`:
-```bash
-make CXX=clang++
-```
-Or direct compilation without `make`:
-```bash
-g++ -std=c++17 -O2 -Wall -Wextra -pedantic src/*.cpp -o parking
-```
+3. **Build the Program**:
+   ```bash
+   make
+   ```
+   *(Compiles `./parking` with `g++` using `-O2 -Wall -Wextra -pedantic` with zero warnings).*
 
-#### 4. Run Command
-Run the compiled `./parking` binary with `input.txt`:
-```bash
-# Prints output directly to terminal (stdout)
-./parking input.txt
+4. **Run the Program**:
+   ```bash
+   # Prints output directly to terminal (stdout)
+   ./parking input.txt
 
-# Or redirect stdout to a text file
-./parking input.txt > output.txt
-```
+   # Or redirect stdout to a text file
+   ./parking input.txt > output.txt
+   ```
 
 ---
 
-### On Windows
+### B. On macOS
 
-#### 1. Clone & Navigate to Repository
-Open PowerShell, Developer Command Prompt, or Terminal:
-```powershell
-git clone https://github.com/Jival-Raghav/Parking-Lot-System.git
-cd Parking-Lot-System
-```
+Follow these steps in order:
 
-#### 2. Prerequisites & Installation Commands
-Install a C++17 toolchain using `winget` (Windows 10/11 built-in), Chocolatey, Scoop, or WSL:
+1. **Clone & Enter the Repository**:
+   ```bash
+   git clone https://github.com/Jival-Raghav/Parking-Lot-System.git
+   cd Parking-Lot-System
+   ```
 
-- **Option 1: Windows Subsystem for Linux (WSL - Recommended)**:
-  If WSL is not yet installed:
-  ```powershell
-  wsl --install
-  ```
-  *(Then open WSL, `cd /mnt/c/path/to/Parking-Lot-System`, and follow the Linux instructions).*
+2. **Install Prerequisites**:
+   ```bash
+   xcode-select --install
+   ```
+   *(Or if using Homebrew: `brew install gcc make`).*
 
-- **Option 2: MinGW-w64 (GCC & Make for native Windows)**:
-  Via `winget`:
-  ```powershell
-  winget install -e --id MSYS2.MSYS2
-  ```
-  Or via Chocolatey / Scoop:
-  ```powershell
-  choco install mingw make cmake -y
-  # Or with Scoop: scoop install gcc make cmake
-  ```
+3. **Build the Program**:
+   ```bash
+   make
+   ```
 
-- **Option 3: Visual Studio C++ Build Tools (MSVC `cl.exe`)**:
-  Via `winget`:
-  ```powershell
-  winget install -e --id Microsoft.VisualStudio.2022.BuildTools --override "--passive --add Microsoft.VisualStudio.Workload.VCTools"
-  ```
-  *(Or install "Desktop development with C++" via the Visual Studio Installer GUI).*
+4. **Run the Program**:
+   ```bash
+   ./parking input.txt
+   ```
 
-#### 3. Build & Run Options
+---
 
-##### Option A: Using MSVC (Developer Command Prompt / PowerShell)
-Compile:
-```cmd
-cl /std:c++17 /O2 /W4 /EHsc src/*.cpp /Feparking.exe
-```
-Run:
-```cmd
-parking.exe input.txt
-```
+### C. On Windows
 
-##### Option B: Using MinGW-w64 (g++)
-Compile:
-```powershell
-g++ -std=c++17 -O2 -Wall -Wextra -pedantic src/*.cpp -o parking.exe
-```
-Run:
-```powershell
-.\parking.exe input.txt
-```
+Choose one of the two clear options below:
 
-##### Option C: Using CMake (Cross-platform)
-Compile:
-```powershell
-cmake -B build
-cmake --build build --config Release
-```
-Run:
-```powershell
-.\build\Release\parking.exe input.txt
-```
+#### Option 1: Using WSL (Recommended — Simplest & Cleanest)
+1. If WSL is not yet installed, open PowerShell and install it:
+   ```powershell
+   wsl --install
+   ```
+   *(Restart your computer if Windows prompts you).*
+2. Open your Ubuntu / WSL terminal and run the complete Linux process:
+   ```bash
+   git clone https://github.com/Jival-Raghav/Parking-Lot-System.git
+   cd Parking-Lot-System
+   sudo apt update && sudo apt install -y build-essential g++ make
+   make
+   ./parking input.txt
+   ```
 
-##### Option D: Using Windows Subsystem for Linux (WSL)
-From Windows PowerShell in the project directory:
-```powershell
-wsl make
-wsl ./parking input.txt
-```
+#### Option 2: Native Windows (via `winget`)
+If you want to build natively on Windows without WSL:
+1. Open PowerShell and install the C++ MinGW compiler via `winget`:
+   ```powershell
+   winget install -e --id BrechtSanders.WinLibs.POSIX.UCRT
+   ```
+2. Close and reopen PowerShell (to refresh environment variables), then clone and enter the repository:
+   ```powershell
+   git clone https://github.com/Jival-Raghav/Parking-Lot-System.git
+   cd Parking-Lot-System
+   ```
+3. Compile the executable:
+   ```powershell
+   g++ -std=c++17 -O2 -Wall -Wextra -pedantic src/*.cpp -o parking.exe
+   ```
+4. Run the program:
+   ```powershell
+   .\parking.exe input.txt
+   ```
 
 ---
 
@@ -196,12 +162,19 @@ Runs 5,000 randomized state mutations with strict bidirectional invariant checki
 
 ### Running Tests on Windows
 
-Using CMake and CTest:
-```powershell
-cmake -B build
-cmake --build build --config Release
-ctest --test-dir build -C Release --output-on-failure
-```
+- **If using WSL (Recommended)**:
+  Run the test commands directly in WSL:
+  ```bash
+  make test
+  make sanitize
+  bash tests/run_bad_inputs.sh
+  ```
+- **If using Native Windows (CMake & CTest)**:
+  ```powershell
+  cmake -B build
+  cmake --build build --config Release
+  ctest --test-dir build -C Release --output-on-failure
+  ```
 
 ---
 
