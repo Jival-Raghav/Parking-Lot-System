@@ -12,3 +12,5 @@ big.txt
 benchmark_100k.txt
 .vs/
 CMakeFiles/
+out/
+tests/testcases/out/
