@@ -165,6 +165,12 @@ Runs 5,000 randomized state mutations with strict bidirectional invariant checki
 ./build/test_fuzz
 ```
 
+#### 5. 25-Case End-to-End Test Suite
+Executes the comprehensive suite of 25 end-to-end test cases (`input1.txt` through `input25.txt`) verifying standard functional paths (PDF sample, tie-breakers, walled entrances) and adversarial edge cases (corrupted maps, UTF-16 encoding rejection, malformed leave arguments, leading zeros):
+```bash
+cd tests/testcases && ./run_all.sh ../../parking
+```
+
 ---
 
 ### Running Tests on Windows
@@ -175,6 +181,7 @@ Runs 5,000 randomized state mutations with strict bidirectional invariant checki
   make test
   make sanitize
   bash tests/run_bad_inputs.sh
+  cd tests/testcases && ./run_all.sh ../../parking
   ```
 - **If using Native Windows (CMake & CTest)**:
   ```powershell
@@ -234,7 +241,12 @@ Latlong/
 │   ├── test_slots.cpp    # Unit tests for usable slot sorting and rank assignment
 │   ├── test_state.cpp    # Unit tests for heap operations, car insertion, and index management
 │   ├── run_bad_inputs.sh # Shell test runner verifying bad input corpus against expected outputs
-│   └── bad_inputs/       # Corpus of malformed/adversarial inputs (Categories A, B, C, D, E)
+│   ├── bad_inputs/       # Corpus of malformed/adversarial inputs (Categories A, B, C, D, E)
+│   └── testcases/        # 25 comprehensive test cases, runner script, and expected outputs
+│       ├── input1.txt .. input25.txt # 5 valid functional & 20 adversarial edge/error test cases
+│       ├── expected/     # Golden expected outputs for valid functional inputs
+│       ├── run_all.sh    # Test runner script evaluating all 25 cases against ./parking
+│       └── TESTCASES.md  # Detailed specifications and descriptions of all 25 test cases
 │
 ├── tools/                # Auxiliary Generation Scripts
 │   ├── gen_large.py      # Benchmark generator for large grids & command sequences
@@ -264,6 +276,9 @@ Latlong/
 - **`test_fuzz.cpp`**: Executes thousands of random operations verifying that free slot counts, occupied slot counts, and indexes match after every single step.
 - **`test_edge_cases.cpp`**: Tests all edge cases including BOM handling, CRLF/CR, long lines, full lots, duplicate registrations, and invalid coordinates.
 - **`bad_inputs/` & `run_bad_inputs.sh`**: 45 adversarial test inputs testing every failure code, stream recovery, orphan map swallowing, and process exit codes.
+- **`testcases/` & `run_all.sh`**: 25 end-to-end test cases with golden outputs and runner script. Covers:
+  - **Inputs 1–5 (Valid Functional Paths)**: PDF sample byte-for-byte matching, walled-in entrance (0 usable slots), equal-distance multi-way tie-breaks, mixed-case colour handling, BOM/CRLF/tab whitespace normalization.
+  - **Inputs 6–25 (Adversarial Error Handling Policy)**: Pre-creation commands, orphan map recovery, dimension bounds, bad map characters, mismatched grid dimensions, excess map lines, blank lines before grid, duplicate lot creation, huge grid dimensions ($>20\text{M}$ cells), malformed `leave` arguments, semantic leave errors, case-sensitive lookups, binary-safe NUL/control characters, UTF-16 rejection (exit 1), and truncated maps.
 
 ---
 
